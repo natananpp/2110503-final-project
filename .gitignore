@@ -1,0 +1,8 @@
+config/config.env
+node_modules/
+
+.github/
+__tests__/
+autograde.js
+
+.vscode/
