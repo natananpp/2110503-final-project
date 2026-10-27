@@ -1,0 +1,32 @@
+{
+  "name": "a4-natananpp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2110503-69CP/a4-natananpp.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/2110503-69CP/a4-natananpp/issues"
+  },
+  "homepage": "https://github.com/2110503-69CP/a4-natananpp#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.4",
+    "newman": "^6.2.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
