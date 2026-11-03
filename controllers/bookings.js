@@ -44,3 +44,45 @@ exports.addBooking = async (req, res, next) => {
         res.status(500).json({ success: false, message: 'Cannot create booking' });
     }
 };
+
+const dentistFields = { path: 'dentist', select: 'name yearsOfExperience expertise' };
+
+const isOwner = (booking, user) => booking.user.toString() === user.id;
+
+//@desc     Get own bookings
+//@route    GET /api/v1/bookings
+//@route    GET /api/v1/dentists/:dentistId/bookings
+//@access   Private
+exports.getBookings = async (req, res, next) => {
+    try {
+        const filter = { user: req.user.id };
+        if (req.params.dentistId) {
+            filter.dentist = req.params.dentistId;
+        }
+
+        const bookings = await Booking.find(filter).populate(dentistFields).sort('bookingDate');
+        res.status(200).json({ success: true, count: bookings.length, data: bookings });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: 'Cannot find bookings' });
+    }
+};
+
+//@desc     Get single booking
+//@route    GET /api/v1/bookings/:id
+//@access   Private (owner)
+exports.getBooking = async (req, res, next) => {
+    try {
+        const booking = await Booking.findById(req.params.id).populate(dentistFields);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: `No booking with the id of ${req.params.id}` });
+        }
+        if (!isOwner(booking, req.user)) {
+            return res.status(403).json({ success: false, message: `User ${req.user.id} is not authorized to view this booking` });
+        }
+        res.status(200).json({ success: true, data: booking });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: 'Cannot find booking' });
+    }
+};
