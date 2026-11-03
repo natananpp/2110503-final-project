@@ -1,4 +1,5 @@
 const Dentist = require('../models/Dentist');
+const Booking = require('../models/Booking');
 
 //@desc     Get all dentists
 //@route    GET /api/v1/dentists
@@ -103,7 +104,7 @@ exports.updateDentist = async (req, res, next) => {
     }
 };
 
-//@desc     Delete dentist
+//@desc     Delete dentist (and all of their bookings)
 //@route    DELETE /api/v1/dentists/:id
 //@access   Private (admin)
 exports.deleteDentist = async (req, res, next) => {
@@ -113,6 +114,7 @@ exports.deleteDentist = async (req, res, next) => {
             return res.status(404).json({ success: false, message: `No dentist with the id of ${req.params.id}` });
         }
 
+        await Booking.deleteMany({ dentist: req.params.id });
         await dentist.deleteOne();
 
         res.status(200).json({ success: true, data: {} });

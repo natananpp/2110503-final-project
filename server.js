@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 
 // Route files
 const dentists = require('./routes/dentists');
+const bookings = require('./routes/bookings');
 const auth = require('./routes/auth');
 
 // Load env vars
@@ -26,6 +27,7 @@ app.use(cookieParser());
 
 // Mount routers
 app.use('/api/v1/dentists', dentists);
+app.use('/api/v1/bookings', bookings);
 app.use('/api/v1/auth', auth);
 
 const PORT = process.env.PORT || 5000;
