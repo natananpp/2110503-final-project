@@ -86,3 +86,44 @@ exports.getBooking = async (req, res, next) => {
         res.status(500).json({ success: false, message: 'Cannot find booking' });
     }
 };
+
+//@desc     Update booking (date and/or dentist)
+//@route    PUT /api/v1/bookings/:id
+//@access   Private (owner)
+exports.updateBooking = async (req, res, next) => {
+    try {
+        let booking = await Booking.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: `No booking with the id of ${req.params.id}` });
+        }
+        if (!isOwner(booking, req.user)) {
+            return res.status(403).json({ success: false, message: `User ${req.user.id} is not authorized to update this booking` });
+        }
+
+        // Only these fields can be changed; the owner (user) can not be changed
+        const updates = {};
+        if (req.body.bookingDate !== undefined) {
+            const dateError = checkBookingDate(req.body.bookingDate);
+            if (dateError) {
+                return res.status(400).json({ success: false, message: dateError });
+            }
+            updates.bookingDate = req.body.bookingDate;
+        }
+        if (req.body.dentist !== undefined) {
+            const dentist = await Dentist.findById(req.body.dentist).catch(() => null);
+            if (!dentist) {
+                return res.status(404).json({ success: false, message: `No dentist with the id of ${req.body.dentist}` });
+            }
+            updates.dentist = dentist._id;
+        }
+
+        booking = await Booking.findByIdAndUpdate(req.params.id, updates, {
+            returnDocument: 'after',
+            runValidators: true
+        }).populate(dentistFields);
+        res.status(200).json({ success: true, data: booking });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: 'Cannot update booking' });
+    }
+};
