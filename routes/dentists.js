@@ -1,5 +1,6 @@
 const express = require('express');
 const { getDentists, getDentist, createDentist, updateDentist, deleteDentist } = require('../controllers/dentists');
+const { getSessions } = require('../controllers/sessions');
 const { protect, authorize } = require('../middleware/auth');
 const bookingRouter = require('./bookings');
 
@@ -7,6 +8,9 @@ const router = express.Router();
 
 // Re-route into other resource routers
 router.use('/:dentistId/bookings', bookingRouter);
+
+// Available sessions, filtered by time period tags
+router.get('/:dentistId/sessions', getSessions);
 
 router.route('/')
     .get(getDentists)
