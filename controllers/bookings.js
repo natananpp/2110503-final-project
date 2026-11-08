@@ -1,6 +1,10 @@
 const Booking = require('../models/Booking');
 const Dentist = require('../models/Dentist');
 
+// clinic's defined operating hours (09:00 - 17:00)
+const CLINIC_START_HOUR = 9; // 09:00
+const CLINIC_END_HOUR = 17;  // 17:00
+
 // Returns an error message if the date is missing, invalid or in the past
 const checkBookingDate = (value) => {
     const date = new Date(value);
@@ -9,6 +13,16 @@ const checkBookingDate = (value) => {
     }
     if (date <= new Date()) {
         return 'Booking date must be in the future';
+    }
+
+    // Check if the booking date is within clinic operating hours (09:00 - 17:00) and not on weekends
+    const day = date.getDay();
+    if (day === 0 || day === 6) {
+        return 'Clinic is closed on weekends. Please book a date between Monday and Friday.';
+    }
+    const hours = date.getHours()-7; // Adjust for timezone difference (UTC+7)
+    if (hours < CLINIC_START_HOUR || hours >= CLINIC_END_HOUR) {
+        return `Please book within clinic operating hours (0${CLINIC_START_HOUR}:00 - ${CLINIC_END_HOUR}:00).`;
     }
     return null;
 };
