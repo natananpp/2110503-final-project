@@ -139,7 +139,7 @@ exports.deleteBooking = async (req, res, next) => {
         if (!booking) {
             return res.status(404).json({ success: false, message: `No booking with the id of ${req.params.id}` });
         }
-        if (!isOwner(booking, req.user)) {
+        if (!isOwner(booking, req.user) && req.user.role !== 'admin') {
             return res.status(403).json({ success: false, message: `User ${req.user.id} is not authorized to delete this booking` });
         }
         await booking.deleteOne();
