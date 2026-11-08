@@ -59,7 +59,9 @@ exports.getBookings = async (req, res, next) => {
         if (req.params.dentistId) {
             filter.dentist = req.params.dentistId;
         }
-
+        if (req.user.role === 'admin') {
+            filter.user = { $exists: true }; // Admin can see all bookings
+        }
         const bookings = await Booking.find(filter).populate(dentistFields).sort('bookingDate');
         res.status(200).json({ success: true, count: bookings.length, data: bookings });
     } catch (error) {
@@ -77,7 +79,7 @@ exports.getBooking = async (req, res, next) => {
         if (!booking) {
             return res.status(404).json({ success: false, message: `No booking with the id of ${req.params.id}` });
         }
-        if (!isOwner(booking, req.user)) {
+        if (!isOwner(booking, req.user) && req.user.role !== 'admin') {
             return res.status(403).json({ success: false, message: `User ${req.user.id} is not authorized to view this booking` });
         }
         res.status(200).json({ success: true, data: booking });
