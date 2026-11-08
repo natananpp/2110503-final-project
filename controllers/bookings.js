@@ -116,6 +116,16 @@ exports.updateBooking = async (req, res, next) => {
             return res.status(403).json({ success: false, message: `User ${req.user.id} is not authorized to update this booking` });
         }
 
+        // If the user is not an admin, check if the booking is less than 24 hours away to prevent changes
+        if (req.user.role !== 'admin') {
+            const timeDifference = new Date(booking.bookingDate).getTime() - Date.now();
+            const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
+            
+            if (timeDifference < twentyFourHoursInMs) {
+                return res.status(400).json({ success: false, message: 'Cannot modify a booking less than 24 hours before the appointment' });
+            }
+        }
+
         // Only these fields can be changed; the owner (user) can not be changed
         const updates = {};
         if (req.body.bookingDate !== undefined) {
@@ -156,6 +166,17 @@ exports.deleteBooking = async (req, res, next) => {
         if (!isOwner(booking, req.user) && req.user.role !== 'admin') {
             return res.status(403).json({ success: false, message: `User ${req.user.id} is not authorized to delete this booking` });
         }
+
+        // If the user is not an admin, check if the booking is less than 24 hours away to prevent deletion
+        if (req.user.role !== 'admin') {
+            const timeDifference = new Date(booking.bookingDate).getTime() - Date.now();
+            const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
+            
+            if (timeDifference < twentyFourHoursInMs) {
+                return res.status(400).json({ success: false, message: 'Cannot delete a booking less than 24 hours before the appointment' });
+            }
+        }
+
         await booking.deleteOne();
         res.status(200).json({ success: true, data: {} });
     } catch (error) {
