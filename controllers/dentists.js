@@ -1,5 +1,6 @@
 const Dentist = require('../models/Dentist');
 const Booking = require('../models/Booking');
+const { uploadImage, deleteImage } = require('../config/cloudinary');
 
 //@desc     Get all dentists
 //@route    GET /api/v1/dentists
@@ -77,6 +78,7 @@ exports.getDentist = async (req, res, next) => {
 //@access   Private (admin)
 exports.createDentist = async (req, res, next) => {
     try {
+        delete req.body.photo; // photo is set only through the upload route
         const dentist = await Dentist.create(req.body);
         res.status(201).json({ success: true, data: dentist });
     } catch (error) {
@@ -90,6 +92,7 @@ exports.createDentist = async (req, res, next) => {
 //@access   Private (admin)
 exports.updateDentist = async (req, res, next) => {
     try {
+        delete req.body.photo; // photo is set only through the upload route
         const dentist = await Dentist.findByIdAndUpdate(req.params.id, req.body, {
             returnDocument: 'after',
             runValidators: true
@@ -115,11 +118,39 @@ exports.deleteDentist = async (req, res, next) => {
         }
 
         await Booking.deleteMany({ dentist: req.params.id });
+        await deleteImage(dentist.photo && dentist.photo.publicId);
         await dentist.deleteOne();
 
         res.status(200).json({ success: true, data: {} });
     } catch (error) {
         console.log(error);
         res.status(400).json({ success: false, message: 'Cannot delete dentist' });
+    }
+};
+
+//@desc     Upload dentist profile photo to Cloudinary (replaces the old one)
+//@route    PUT /api/v1/dentists/:id/photo   (form-data, field "photo")
+//@access   Private (admin)
+exports.uploadDentistPhoto = async (req, res, next) => {
+    try {
+        const dentist = await Dentist.findById(req.params.id).catch(() => null);
+        if (!dentist) {
+            return res.status(404).json({ success: false, message: `No dentist with the id of ${req.params.id}` });
+        }
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'Please upload an image in form-data field "photo"' });
+        }
+
+        const result = await uploadImage(req.file.buffer, 'dentist-booking/dentists');
+        const oldPublicId = dentist.photo && dentist.photo.publicId;
+
+        dentist.photo = { url: result.secure_url, publicId: result.public_id };
+        await dentist.save();
+        await deleteImage(oldPublicId);
+
+        res.status(200).json({ success: true, data: dentist });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: 'Cannot upload photo' });
     }
 };

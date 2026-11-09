@@ -18,6 +18,11 @@ const DentistSchema = new mongoose.Schema({
         required: [true, 'Please add an area of expertise'],
         trim: true
     },
+    // Profile photo stored on Cloudinary (set by PUT /dentists/:id/photo)
+    photo: {
+        url: String,
+        publicId: String
+    },
     createdAt: {
         type: Date,
         default: Date.now

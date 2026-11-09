@@ -19,11 +19,13 @@
   "homepage": "https://github.com/2110503-69CP/a4-natananpp#readme",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.4",
+    "multer": "^2.5.0",
     "newman": "^6.2.2"
   },
   "devDependencies": {
