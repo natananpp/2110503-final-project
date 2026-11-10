@@ -36,6 +36,13 @@ const UserSchema = new mongoose.Schema({
         minLength: 6,
         select: false,
     },
+    // Email OTP verification. New users start as false; users created
+    // before this feature have no value and are treated as verified.
+    isVerified: Boolean,
+    otpHash: { type: String, select: false },
+    otpExpire: { type: Date, select: false },
+    otpAttempts: { type: Number, select: false },
+    otpSentAt: { type: Date, select: false },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
     createdAt: {
