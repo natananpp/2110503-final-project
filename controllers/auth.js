@@ -26,9 +26,10 @@ const newOtp = () => {
 const debugOtp = (otp) =>
     process.env.OTP_IN_RESPONSE === 'true' && process.env.NODE_ENV !== 'production' ? { otp } : {};
 
-// Switch in config.env: REQUIRE_EMAIL_VERIFICATION=false lets users log in
-// without the OTP (the OTP email is still sent). Default: required.
-const verificationRequired = () => process.env.REQUIRE_EMAIL_VERIFICATION !== 'false';
+// Switch in config.env. The OTP email is always sent at registration.
+// REQUIRE_EMAIL_VERIFICATION=true  -> must verify the OTP before logging in
+// not set / false                  -> register returns a token and login works right away
+const verificationRequired = () => process.env.REQUIRE_EMAIL_VERIFICATION === 'true';
 
 //@desc     Register user and email an OTP to verify the email address
 //@route    POST /api/v1/auth/register
@@ -62,7 +63,7 @@ exports.register = async (req, res, next) => {
 
         // Verification switched off -> log in right away, like before
         if (!verificationRequired()) {
-            return sendTokenResponse(user, 201, res);
+            return sendTokenResponse(user, 201, res, debugOtp(otp));
         }
 
         res.status(201).json({
@@ -176,7 +177,7 @@ exports.login = async (req, res, next) => {
 };
 
 // Get token from model, create cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
+const sendTokenResponse = (user, statusCode, res, extra = {}) => {
     // Create token
     const token = user.getSignedJwtToken();
     const options = {
@@ -191,6 +192,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     res.status(statusCode).cookie("token", token, options).json({
         success: true,
         token,
+        ...extra
     });
 };
 
