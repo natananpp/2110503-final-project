@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 exports.register = async (req, res, next) => {
     try {
@@ -81,3 +83,47 @@ exports.logout = async (req, res, next) => {
     });
     res.status(200).json({ success: true, data: {} });
 }
+
+//@desc     Login or Register with Google
+//@route    POST /api/v1/auth/google
+//@access   Public
+exports.googleLogin = async (req, res, next) => {
+    try {
+        const { idToken, tel } = req.body;
+
+        if (!idToken) {
+            return res.status(400).json({ success: false, msg: "Please provide a Google ID Token" });
+        }
+
+        // 1. ตรวจสอบว่า Token ถูกต้องและมาจากแอปเราจริงหรือไม่
+        const ticket = await client.verifyIdToken({
+            idToken: idToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        // 2. ดึงข้อมูล User จาก Payload
+        const payload = ticket.getPayload();
+        const { email, name } = payload;
+
+        // 3. ตรวจสอบว่ามีอีเมลนี้ในระบบหรือยัง
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            // ถ้ายังไม่มี = สมัครสมาชิกใหม่
+            user = await User.create({
+                name,
+                tel,
+                email,
+                provider: 'google',
+                role: 'user'
+            });
+        }
+
+        // 4. สร้าง JWT Token ของระบบเรา (ด้วยฟังก์ชันที่มีอยู่แล้ว) แล้วส่งคืน
+        sendTokenResponse(user, 200, res);
+
+    } catch (error) {
+        console.error("Google Auth Error:", error.message);
+        res.status(401).json({ success: false, msg: "Invalid Google Token" });
+    }
+};

@@ -9,8 +9,15 @@ const UserSchema = new mongoose.Schema({
     },
     tel: {
         type: String,
-        required: [true, "Please add a telephone number"],
+        // กำหนดเงื่อนไข: จะ require ก็ต่อเมื่อ provider เป็น 'local'
+        required: [
+            function () { 
+                return this.provider === 'local'; 
+            }, 
+            "Please add a telephone number"
+        ],
         unique: true,
+        sparse: true,
         match: [
             /^(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/,
             "Please add a valid telephone number",
@@ -32,9 +39,20 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, "Please add a password"],
+        // กำหนดเงื่อนไข: จะ require ก็ต่อเมื่อ provider เป็น 'local'
+        required: [
+            function () { 
+                return this.provider === 'local'; 
+            }, 
+            "Please add a password"
+        ],
         minLength: 6,
         select: false,
+    },
+    provider: { // เพิ่ม field สำหรับแยกประเภทการล็อกอิน
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local'
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
@@ -44,7 +62,11 @@ const UserSchema = new mongoose.Schema({
     },
 });
 
-UserSchema.pre("save", async function (next) {
+// ป้องกัน Error ตอน Hash รหัสผ่าน กรณี User มาจาก Google แล้วไม่มีรหัสผ่าน
+UserSchema.pre("save", async function () {
+    if (!this.isModified('password') || !this.password) {
+        return;
+    }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });
