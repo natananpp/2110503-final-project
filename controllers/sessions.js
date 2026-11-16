@@ -1,10 +1,10 @@
 const Booking = require('../models/Booking');
 const Dentist = require('../models/Dentist');
-const { TIMEZONE_OFFSET, SESSION_MINUTES, WORKING_DAYS, PERIODS } = require('../config/sessions');
+const { TIMEZONE_OFFSET, SESSION_MINUTES, WORKING_DAYS, PERIODS, nowInClinic } = require('../config/sessions');
 
 const pad = (n) => String(n).padStart(2, '0');
 
-// Date in clinic time, e.g. ('2026-11-20', 9, 30) -> 2026-11-20 09:30 +07:00
+// Date in clinic time, e.g. ('2026-11-20', 9, 30) -> 2026-11-20T09:30:00Z (Thai time with Z)
 const clinicTime = (date, hour, minute = 0) =>
     new Date(`${date}T${pad(hour)}:${pad(minute)}:00${TIMEZONE_OFFSET}`);
 
@@ -60,7 +60,7 @@ exports.getSessions = async (req, res, next) => {
             bookingDate: { $gte: dayStart, $lt: dayEnd }
         }).select('bookingDate');
 
-        const now = new Date();
+        const now = nowInClinic();
         const sessions = [];
         for (const name of periods) {
             const { start, end } = PERIODS[name];

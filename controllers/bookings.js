@@ -1,5 +1,7 @@
 const Booking = require('../models/Booking');
 const Dentist = require('../models/Dentist');
+// Dates are Thai time written with "Z" (see config/sessions.js), so compare with nowInClinic()
+const { nowInClinic } = require('../config/sessions');
 
 // clinic's defined operating hours (09:00 - 17:00)
 const CLINIC_START_HOUR = 9; // 09:00
@@ -11,12 +13,12 @@ const checkBookingDate = (value) => {
     if (!value || isNaN(date.getTime())) {
         return 'Please provide a valid booking date';
     }
-    if (date <= new Date()) {
+    if (date <= nowInClinic()) {
         return 'Booking date must be in the future';
     }
 
     // Check if the booking date is within clinic operating hours (09:00 - 17:00) and not on weekends
-    // Shift to Thai time (UTC+7), then read it with getUTC* so the server's time zone doesn't matter
+    // The date is already Thai time, read it with getUTC* so the server's time zone doesn't matter
     const day = date.getUTCDay();
     if (day === 0 || day === 6) {
         return 'Clinic is closed on weekends. Please book a date between Monday and Friday.';
@@ -119,7 +121,7 @@ exports.updateBooking = async (req, res, next) => {
 
         // If the user is not an admin, check if the booking is less than 24 hours away to prevent changes
         if (req.user.role !== 'admin') {
-            const timeDifference = new Date(booking.bookingDate).getTime() - (Date.now()+ 7 * 60 * 60 * 1000);
+            const timeDifference = new Date(booking.bookingDate).getTime() - nowInClinic().getTime();
             const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
             
             if (timeDifference < twentyFourHoursInMs) {
@@ -170,7 +172,7 @@ exports.deleteBooking = async (req, res, next) => {
 
         // If the user is not an admin, check if the booking is less than 24 hours away to prevent deletion
         if (req.user.role !== 'admin') {
-            const timeDifference = new Date(booking.bookingDate).getTime() - (Date.now()+ 7 * 60 * 60 * 1000);
+            const timeDifference = new Date(booking.bookingDate).getTime() - nowInClinic().getTime();
             const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
             
             if (timeDifference < twentyFourHoursInMs) {
