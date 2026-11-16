@@ -17,12 +17,11 @@ const checkBookingDate = (value) => {
 
     // Check if the booking date is within clinic operating hours (09:00 - 17:00) and not on weekends
     // Shift to Thai time (UTC+7), then read it with getUTC* so the server's time zone doesn't matter
-    const thai = new Date(date.getTime() + 7 * 60 * 60 * 1000);
-    const day = thai.getUTCDay();
+    const day = date.getUTCDay();
     if (day === 0 || day === 6) {
         return 'Clinic is closed on weekends. Please book a date between Monday and Friday.';
     }
-    const hours = thai.getUTCHours();
+    const hours = date.getUTCHours();
     if (hours < CLINIC_START_HOUR || hours >= CLINIC_END_HOUR) {
         return `Please book within clinic operating hours (0${CLINIC_START_HOUR}:00 - ${CLINIC_END_HOUR}:00).`;
     }
@@ -120,7 +119,7 @@ exports.updateBooking = async (req, res, next) => {
 
         // If the user is not an admin, check if the booking is less than 24 hours away to prevent changes
         if (req.user.role !== 'admin') {
-            const timeDifference = new Date(booking.bookingDate).getTime() - Date.now();
+            const timeDifference = new Date(booking.bookingDate).getTime() - (Date.now()+ 7 * 60 * 60 * 1000);
             const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
             
             if (timeDifference < twentyFourHoursInMs) {
@@ -171,7 +170,7 @@ exports.deleteBooking = async (req, res, next) => {
 
         // If the user is not an admin, check if the booking is less than 24 hours away to prevent deletion
         if (req.user.role !== 'admin') {
-            const timeDifference = new Date(booking.bookingDate).getTime() - Date.now();
+            const timeDifference = new Date(booking.bookingDate).getTime() - (Date.now()+ 7 * 60 * 60 * 1000);
             const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
             
             if (timeDifference < twentyFourHoursInMs) {
